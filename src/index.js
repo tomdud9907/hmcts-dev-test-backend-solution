@@ -1,28 +1,32 @@
 import express from "express"
+import cors from "cors"
 import { PrismaClient } from "@prisma/client"
-import { taskSchema } from "./validators/taskValidator"
+import { taskSchema } from "./validators/taskValidator.js"
 
 const app = express()
 const prisma = new PrismaClient()
 
+app.use(cors())
 app.use(express.json())
 
 app.post("/tasks", async (req, res) => {
   const parseResult = taskSchema.safeParse(req.body)
 
   if (!parseResult.success) {
-    return res.status(400).json({ error: parseResult.error.errors })
+    return res.status(400).json({
+      error: parseResult.error.errors[0].message,
+    })
   }
 
-  const { title, description, status, dueDate } = parseResult.data
+  const { title, description } = parseResult.data
 
   try {
     const task = await prisma.task.create({
       data: {
         title,
         description,
-        status,
-        dueDate: new Date(dueDate),
+        status: "CREATED",
+        dueDate: new Date(),
       },
     })
 
